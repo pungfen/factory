@@ -1,0 +1,13 @@
+{
+  "name": "@factory/core",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": ""
+  },
+  "author": "pung <fp94214@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "vue": "^3.2.45"
+  }
+}

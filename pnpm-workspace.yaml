@@ -1,0 +1,5 @@
+packages:
+  - 'packages/*'
+  - 'vue-project'
+  # exclude packages that are inside test directories
+  - '!**/test/**'

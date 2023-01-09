@@ -19,6 +19,12 @@ importers:
   packages/plugin:
     specifiers: {}
 
+  packages/use:
+    specifiers:
+      vue: ^3.2.45
+    dependencies:
+      vue: 3.2.45
+
   vue-project:
     specifiers:
       '@playwright/test': ^1.28.1

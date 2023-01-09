@@ -1,0 +1,6 @@
+{
+  "name": "@factory/use",
+  "dependencies": {
+    "vue": "^3.2.45"
+  }
+}

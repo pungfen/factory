@@ -1,6 +1,10 @@
 {
-  "include": ["packages/**/*", "playwright.config.*", "vitest.config.*"],
+  "include": ["packages", "playwright.config.*", "vitest.config.*"],
   "compilerOptions": {
-    "types": ["node", "jsdom"]
+    "types": ["node", "jsdom"],
+    "lib": ["ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "target": "ESNext"
   }
 }

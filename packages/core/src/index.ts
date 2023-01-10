@@ -19,11 +19,37 @@ type Options<PropsOptions, SetupOptions, Props = Readonly<ExtractPropTypes<Props
   setup: (this: Props & { xx: number }) => SetupOptions
 }
 
-type Ajax = {}
+interface Actions {
+  'GET /xx': {
+    Client: {
+      name: string
+    }
+    Payload: {
+      name?: string
+    }
+  }
+  'GET /yy': {
+    Client: {
+      name: string
+    }
+    Payload: {
+      name?: string
+    }
+  }
+}
+
+interface MapActions {}
+
+type AjaxConfig = {
+  [Action in keyof Actions]: {
+    action: Action
+    params?: (params: { path: Actions[Action]['Paths']; payload: Actions[Action]['Payload'] }) => void
+  }
+}[keyof Actions]
 
 interface Setup {
   [index: string]: any
-  ajax?: Record<string, Ajax>
+  ajax?: Record<string, AjaxConfig>
   children?: Record<string, Setup>
 }
 
@@ -67,6 +93,14 @@ factory({
         },
         children: {
           foo: {
+            ajax: {
+              get: {
+                action: 'GET /yy',
+                params(params) {
+                  params.payload.name = 'xxx'
+                }
+              }
+            },
             xx: 'xx',
             // change() {
             //   this

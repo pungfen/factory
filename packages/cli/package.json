@@ -1,0 +1,13 @@
+{
+  "name": "@factory/cli",
+  "type": "module",
+  "dependencies": {
+    "commander": "^9.5.0",
+    "magic-string": "^0.27.0",
+    "node-fetch": "^3.3.0",
+    "unconfig": "^0.3.7"
+  },
+  "bin": {
+    "swagger": "./dist/swagger.js"
+  }
+}

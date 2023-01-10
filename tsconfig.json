@@ -1,4 +1,6 @@
 {
-  "compilerOptions": {},
-  "include": ["packages/**/*"]
+  "include": ["packages/**/*", "playwright.config.*", "vitest.config.*"],
+  "compilerOptions": {
+    "types": ["node", "jsdom"]
+  }
 }

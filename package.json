@@ -1,12 +1,16 @@
 {
   "name": "factory",
   "scripts": {
-    "play": "pnpm -C vue-project dev"
+    "play": "pnpm -C vue-project dev",
+    "test": "pnpm -C vitest start"
   },
   "author": "pung <fp94214@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "@enochfe/prettier-config": "^0.0.7",
+    "@types/node": "^18.11.12",
     "prettier": "^2.8.1",
     "typescript": "^4.9.4"
-  }
+  },
+  "prettier": "@enochfe/prettier-config"
 }

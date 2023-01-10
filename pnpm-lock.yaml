@@ -6,7 +6,6 @@ importers:
     specifiers:
       '@enochfe/prettier-config': ^0.0.7
       '@types/node': ^18.11.12
-      '@types/prettier': ^2.7.2
       esno: ^0.16.3
       prettier: ^2.8.1
       ts-node: ^10.9.1
@@ -14,7 +13,6 @@ importers:
     devDependencies:
       '@enochfe/prettier-config': 0.0.7_prettier@2.8.1
       '@types/node': 18.11.18
-      '@types/prettier': 2.7.2
       esno: 0.16.3
       prettier: 2.8.1
       ts-node: 10.9.1_awa2wsr5thmg3i7jqycphctjfq
@@ -22,15 +20,20 @@ importers:
 
   packages/cli:
     specifiers:
+      '@types/prettier': ^2.7.2
       commander: ^9.5.0
       magic-string: ^0.27.0
       node-fetch: ^3.3.0
+      prettier: ^2.8.1
       unconfig: ^0.3.7
     dependencies:
       commander: 9.5.0
       magic-string: 0.27.0
       node-fetch: 3.3.0
+      prettier: 2.8.1
       unconfig: 0.3.7
+    devDependencies:
+      '@types/prettier': 2.7.2
 
   packages/core:
     specifiers:
@@ -1744,7 +1747,6 @@ packages:
     resolution: {integrity: sha512-lqGoSJBQNJidqCHE80vqZJHWHRFoNYsSpP9AjFhlhi9ODCJA541svILes/+/1GM3VaL/abZi7cpFzOpdR9UPKg==}
     engines: {node: '>=10.13.0'}
     hasBin: true
-    dev: true
 
   /psl/1.9.0:
     resolution: {integrity: sha512-E/ZsdU4HLs/68gYzgGTkMicWTLPdAftJLfJFlLUAAKZGkStNU72sZjT66SnMDVOfOWY/YAoiD7Jxa9iHvngcag==}

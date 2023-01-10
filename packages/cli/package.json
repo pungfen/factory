@@ -5,9 +5,13 @@
     "commander": "^9.5.0",
     "magic-string": "^0.27.0",
     "node-fetch": "^3.3.0",
+    "prettier": "^2.8.1",
     "unconfig": "^0.3.7"
   },
   "bin": {
     "swagger": "./dist/swagger.js"
+  },
+  "devDependencies": {
+    "@types/prettier": "^2.7.2"
   }
 }

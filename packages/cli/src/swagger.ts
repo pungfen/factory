@@ -6,8 +6,9 @@ import { writeFileSync, existsSync, lstatSync, mkdirSync } from 'node:fs'
 import { resolve, relative } from 'node:path'
 import fetch from 'node-fetch'
 
-// import prettier, { type Options as PrettierOptions } from 'prettier'
-// import parserTypescript from 'prettier/parser-typescript.js'
+import MagicString from 'magic-string'
+import prettier, { type Options as PrettierOptions } from 'prettier'
+import parserTypescript from 'prettier/parser-typescript.js'
 
 import { config } from './config'
 
@@ -136,8 +137,193 @@ const resolvedSwaggerConfig = (config: SwaggerConfig): ResolvedSwaggerConfig => 
   return Object.assign({ ext: 'd.ts', output: 'definitions', resources: [] }, config)
 }
 
+const upCaseWord = (str: string) => str.toLocaleUpperCase()
+const upCaseFirstWord = (str: string) => str.slice(0, 1).toLocaleUpperCase() + str.slice(1)
+const camelWord = (str: string) => str.split('-').map(upCaseFirstWord).join('')
+
+const formatDefinitions = (doc: Doc) => {
+  const { definitions = {}, resource } = doc
+  const ms = new MagicString('')
+
+  const definitionsName = `${camelWord(resource.options.name)}${camelWord(resource.name)}Definitions`
+
+  ms.append(`interface ${definitionsName} {`)
+
+  Object.entries(definitions).forEach(([dtoname, dtoConfig]) => {
+    const { properties, type, required = [] } = dtoConfig
+
+    if (type === 'object') {
+      ms.append(`'${dtoname}':`).append('{')
+
+      if (properties) {
+        Object.entries(properties).forEach(([prop, propConfig]) => {
+          const { description, type, $ref, items } = propConfig
+
+          if (description) ms.append(`\n/** ${description} */\n`)
+
+          ms.append(required.includes(prop) ? `'${prop}'` : `'${prop}'?`).append(':')
+
+          if (type) {
+            switch (type) {
+              case 'array':
+                if (items?.$ref) {
+                  ms.append(`${definitionsName}['${items.$ref.replace('#/definitions/', '')}'][];`)
+                } else {
+                  ms.append('unknown[];')
+                }
+                break
+              case 'string':
+                ms.append('string;')
+                break
+              case 'number':
+              case 'integer':
+                ms.append(prop.toLocaleLowerCase().includes('id') ? 'string | number;' : 'number;')
+                break
+              default:
+                ms.append('unknown;')
+                break
+            }
+          } else if ($ref) {
+            ms.append(`${definitionsName}['${$ref.replace('#/definitions/', '')}'];`)
+          }
+        })
+      }
+
+      ms.append('};')
+    }
+  })
+
+  ms.append('}')
+
+  return prettier.format(ms.toString(), options.prettier)
+}
+
+const formatPaths = (doc: Doc) => {
+  const { paths = {}, resource } = doc
+  const ms = new MagicString('')
+
+  const definitionsName = `${camelWord(resource.options.name)}${camelWord(resource.name)}Definitions`
+  const actionName = `${camelWord(resource.options.name)}${camelWord(resource.name)}Actions`
+
+  const formatPatameters = (parameters: Parameters[], ms: MagicString, _in: Parameters['in']) => {
+    const params = parameters.filter((param) => param.in === _in)
+
+    if (params.length) {
+      let index = 0
+      let skip = false
+
+      ms.append(_in).append(':')
+
+      if (_in === 'body') {
+        ms.append(`${definitionsName}['${params[0].schema?.$ref?.replace('#/definitions/', '')}'];`)
+      } else {
+        ms.append('{')
+
+        params.forEach((param, i) => {
+          index = i
+
+          let { description, name, type, required, enum: _enum, items = { type: 'string' } } = param
+
+          if (description) ms.append(`\n/** ${description} */\n`)
+
+          if (skip && name.endsWith('.type')) return
+          if (skip && name.endsWith('.message')) return
+          if (skip && name.endsWith('.description')) return
+
+          type = type === 'integer' ? 'number' : type
+
+          if (name.endsWith('.code')) {
+            const istruth = (valid: string) => ++index && params[index].name.endsWith(valid)
+            if (istruth('.type') && istruth('.message') && istruth('.description')) {
+              skip = true
+              name = name.replace('.code', '')
+              ms.append(required ? `'${name}':` : `'${name}'?:${type};`)
+              return
+            }
+          }
+
+          skip = false
+          ms.append(required ? `'${name}':` : `'${name}'?:`)
+
+          switch (type) {
+            case 'string':
+            case 'number':
+            case 'boolean':
+              ms.append(name.toLocaleLowerCase().includes('id') ? `string | ${type};` : `${type};`)
+              break
+            case 'array':
+              if (items.type === 'string') {
+                if (items.enum) {
+                  ms.append(`Array<${items.enum.map((e) => `"${e}"`).join('|')}>;`)
+                } else {
+                  ms.append('string[];')
+                }
+              } else if (items.type === 'integer') {
+                ms.append('number[];')
+              }
+              break
+          }
+        })
+        ms.append('};')
+      }
+    }
+  }
+
+  ms.append(`interface ${actionName} {`)
+
+  Object.entries(paths).forEach(([path, pathConfig]) => {
+    if (path.startsWith('/api')) return
+    Object.entries(pathConfig).forEach(([key, keyConfig]) => {
+      const { description, parameters, responses } = keyConfig
+      if (description) ms.append(`\n/** ${description} */\n`)
+      ms.append(`'${upCaseWord(key)} ${path.replace('{', ':').replace('}', '')}':`).append('{')
+
+      if (parameters) {
+        ms.append('parameters:{')
+        formatPatameters(parameters, ms, 'query')
+        formatPatameters(parameters, ms, 'body')
+        formatPatameters(parameters, ms, 'path')
+        ms.append('};')
+      }
+
+      if (responses) {
+        ms.append('responses:{')
+
+        Object.entries(responses).forEach(([responsesStatus, responsesConfig]) => {
+          if (responsesConfig.description) ms.append(`\n/** ${responsesConfig.description} */\n`)
+          ms.append(responsesStatus).append(':')
+          switch (responsesStatus) {
+            case '200':
+              if (responsesConfig.schema?.$ref) {
+                ms.append('{')
+                  .append('schema')
+                  .append(':')
+                  .append(`${definitionsName}['${responsesConfig.schema?.$ref.replace('#/definitions/', '')}'] };`)
+              } else {
+                ms.append('unknown;')
+              }
+              break
+            default:
+              ms.append('unknown;')
+          }
+        })
+
+        ms.append('};')
+      }
+
+      ms.append('};')
+    })
+  })
+
+  ms.append('}')
+
+  return prettier.format(ms.toString(), options.prettier)
+}
+
 const format = (doc: Doc) => {
-  return ''
+  const definitions = formatDefinitions(doc)
+  const paths = formatPaths(doc)
+  return definitions + paths
 }
 
 const run = async () => {

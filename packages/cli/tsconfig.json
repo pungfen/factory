@@ -1,11 +1,22 @@
 {
-  "include": ["src"],
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "types": ["node"],
+    "allowSyntheticDefaultImports": true, // for import prettier
+
+    "declaration": true,
+    "emitDeclarationOnly": true,
+
+    "esModuleInterop": true,
+
     "lib": ["ESNext"],
+
     "module": "ESNext",
     "moduleResolution": "Node",
+
+    "outDir": "types",
+
+    "skipLibCheck": true,
+
     "target": "ESNext"
-  }
+  },
+  "include": ["src"]
 }

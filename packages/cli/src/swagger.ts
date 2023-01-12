@@ -10,7 +10,7 @@ import MagicString from 'magic-string'
 import prettier, { type Options as PrettierOptions } from 'prettier'
 import parserTypescript from 'prettier/parser-typescript.js'
 
-import { config } from './config'
+import { loadConfig } from 'unconfig'
 
 interface ResourceOptions {
   name: string
@@ -21,9 +21,18 @@ export interface SwaggerConfig {
   ext?: 'd.ts' | 'ts'
   output?: string
   resources: ResourceOptions[]
+  prettier?: Pick<PrettierOptions, 'semi' | 'singleQuote'>
 }
 
-type ResolvedSwaggerConfig = Required<SwaggerConfig>
+interface Config {
+  swagger: SwaggerConfig
+}
+
+type ResolvedSwaggerConfig = Required<
+  SwaggerConfig & {
+    prettier: Pick<PrettierOptions, 'parser' | 'plugins'>
+  }
+>
 
 interface Definition {
   properties: Record<string, { description?: string; type?: 'string' | 'integer' | 'array' | 'number'; $ref?: string; items?: { $ref: string } }>
@@ -133,8 +142,23 @@ const swagger = {
   }
 }
 
-const resolvedSwaggerConfig = (config: SwaggerConfig): ResolvedSwaggerConfig => {
-  return Object.assign({ ext: 'd.ts', output: 'definitions', resources: [] }, config)
+const resolvedSwaggerConfig = async (): Promise<ResolvedSwaggerConfig> => {
+  const { config } = await loadConfig<Config>({ sources: [{ files: 'package.json' }] })
+
+  return Object.assign(
+    {
+      ext: 'd.ts',
+      output: 'definitions',
+      resources: [],
+      prettier: {
+        semi: false,
+        singleQuote: true,
+        parser: 'typescript',
+        plugins: [parserTypescript]
+      }
+    },
+    config.swagger
+  )
 }
 
 const upCaseWord = (str: string) => str.toLocaleUpperCase()
@@ -145,7 +169,7 @@ const formatDefinitions = (doc: Doc) => {
   const { definitions = {}, resource } = doc
   const ms = new MagicString('')
 
-  const definitionsName = `${camelWord(resource.options.name)}${camelWord(resource.name)}Definitions`
+  const definitionsName = `${camelWord(resource.source)}${camelWord(resource.name)}Definitions`
 
   ms.append(`interface ${definitionsName} {`)
 
@@ -195,15 +219,15 @@ const formatDefinitions = (doc: Doc) => {
 
   ms.append('}')
 
-  return prettier.format(ms.toString(), options.prettier)
+  return prettier.format(ms.toString(), resolvedConfig.prettier)
 }
 
 const formatPaths = (doc: Doc) => {
   const { paths = {}, resource } = doc
   const ms = new MagicString('')
 
-  const definitionsName = `${camelWord(resource.options.name)}${camelWord(resource.name)}Definitions`
-  const actionName = `${camelWord(resource.options.name)}${camelWord(resource.name)}Actions`
+  const definitionsName = `${camelWord(resource.source)}${camelWord(resource.name)}Definitions`
+  const actionName = `${camelWord(resource.source)}${camelWord(resource.name)}Actions`
 
   const formatPatameters = (parameters: Parameters[], ms: MagicString, _in: Parameters['in']) => {
     const params = parameters.filter((param) => param.in === _in)
@@ -317,7 +341,7 @@ const formatPaths = (doc: Doc) => {
 
   ms.append('}')
 
-  return prettier.format(ms.toString(), options.prettier)
+  return prettier.format(ms.toString(), resolvedConfig.prettier)
 }
 
 const format = (doc: Doc) => {
@@ -327,14 +351,14 @@ const format = (doc: Doc) => {
 }
 
 const run = async () => {
-  resolvedConfig = resolvedSwaggerConfig(config.swagger)
+  resolvedConfig = await resolvedSwaggerConfig()
   await swagger.resource.get()
   await swagger.doc.get()
 
   const root = cwd()
   for (const doc of swagger.doc.data) {
     const timeStart = process.hrtime()
-    const dirPath = resolve(root, `${resolvedConfig.output}/${doc.resource.name}`)
+    const dirPath = resolve(root, `${resolvedConfig.output}/${doc.resource.source}`)
     const isDir = existsSync(dirPath) && lstatSync(dirPath).isDirectory()
     if (!isDir) mkdirSync(dirPath, { recursive: true })
     const filePath = `${dirPath}/${doc.resource.name}.${resolvedConfig.ext}`

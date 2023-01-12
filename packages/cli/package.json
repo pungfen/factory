@@ -5,7 +5,7 @@
     "commander": "^9.5.0",
     "magic-string": "^0.27.0",
     "node-fetch": "^3.3.0",
-    "prettier": "^2.8.1",
+    "prettier": "^2.8.2",
     "unconfig": "^0.3.7"
   },
   "bin": {
@@ -13,5 +13,10 @@
   },
   "devDependencies": {
     "@types/prettier": "^2.7.2"
+  },
+  "scripts": {
+    "build": "run-s build:bundle build:types",
+    "build:bundle": "esno build.ts",
+    "build:types": "tsc"
   }
 }

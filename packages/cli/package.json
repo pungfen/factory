@@ -1,8 +1,8 @@
 {
   "name": "@factory/cli",
+  "version": "0.0.1",
   "type": "module",
   "dependencies": {
-    "commander": "^9.5.0",
     "magic-string": "^0.27.0",
     "node-fetch": "^3.3.0",
     "prettier": "^2.8.2",

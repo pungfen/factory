@@ -5,11 +5,14 @@ const outdir = 'dist'
 
 await rm(outdir, { recursive: true, force: true })
 
+import pi from './package.json'
+
 build({
   bundle: true,
+  define: { VERSION: JSON.stringify(pi.version) },
   entryPoints: ['src/swagger.ts'],
-  external: ['commander', 'node-fetch', 'prettier', 'unconfig', 'magic-string'],
-  format: 'cjs',
+  external: Object.keys(pi.dependencies),
+  format: 'esm',
   outdir: 'dist',
   platform: 'node',
   treeShaking: true

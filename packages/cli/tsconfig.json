@@ -1,19 +1,17 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true, // for import prettier
-
     "declaration": true,
     "emitDeclarationOnly": true,
 
     "esModuleInterop": true,
-
+    "isolatedModules": true,
     "lib": ["ESNext"],
 
     "module": "ESNext",
     "moduleResolution": "Node",
 
     "outDir": "types",
-
     "skipLibCheck": true,
 
     "target": "ESNext"

@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander'
 import { cwd } from 'node:process'
 import { writeFileSync, existsSync, lstatSync, mkdirSync } from 'node:fs'
 import { resolve, relative } from 'node:path'
@@ -371,7 +370,3 @@ const run = async () => {
 }
 
 run()
-
-// const program = new Command()
-
-// program.name('swagger').action(run)
